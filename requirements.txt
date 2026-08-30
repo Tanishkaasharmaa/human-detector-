@@ -2,3 +2,4 @@ ultralytics
 fiftyone
 opencv-python
 matplotlib
+lapx

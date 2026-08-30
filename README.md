@@ -49,23 +49,83 @@ This process ensured that the training, validation, and test splits of the datas
 ![image](https://github.com/insomnius/person-detection/assets/20650401/d62f425f-ec3d-424d-ae32-09b1d254cddc)
 
 ## Usage
-1. Run the EDA code:
-```
+
+### 1. Exploratory Data Analysis (EDA)
+Load COCO 2017 dataset, filter for the 'person' class, and export in YOLOv5 format:
+```bash
 python eda.py
 ```
-This will load the COCO 2017 dataset, filter it for the 'person' class, and export the dataset in the YOLOv5 format.
 
-2. Run the training code:
-```
+### 2. Model Training
+Train YOLOv8 models (`yolov8n`, `yolov8s`, `yolov8m`) on the filtered dataset:
+```bash
 python train.py
 ```
-This will train the YOLOv8 models on the filtered COCO 2017 dataset and save the trained weights in the `./training/` directory.
 
-3. Run the tracking code:
+### 3. Testing Video & Tracking
+Use `test_video.py` to run person detection and tracking on any custom video:
+
+- **Run on a full video**:
+  ```bash
+  python test_video.py --video "your_video.mp4"
+  ```
+
+- **Run on a percentage of the video** (e.g. process only 20% for quick testing):
+  ```bash
+  python test_video.py --video "your_video.mp4" --percent 20
+  ```
+
+- **Specify model weights & confidence threshold**:
+  ```bash
+  python test_video.py --video "your_video.mp4" --model "./training/yolov8n/train/weights/best.pt" --conf 0.3
+  ```
+
+- **Enable live window preview** (if supported by your OpenCV environment):
+  ```bash
+  python test_video.py --video "your_video.mp4" --show
+  ```
+
+---
+
+## ⚡ Deployment on Edge Devices (Jetson Nano / Raspberry Pi)
+
+This project can be deployed on embedded edge devices like **NVIDIA Jetson Nano** or **Raspberry Pi (Pi 4 / Pi 5)**. For optimal real-time performance (high FPS), export the PyTorch model to hardware-accelerated formats:
+
+### 1. NVIDIA Jetson Nano Dev Kit (TensorRT)
+Jetson Nano hardware is accelerated using TensorRT (`.engine`):
+
+1. Export trained YOLOv8 model to TensorRT FP16:
+   ```python
+   from ultralytics import YOLO
+   model = YOLO("yolov8n.pt")
+   model.export(format="engine", half=True, device=0)
+   ```
+2. Run video tracking using TensorRT backend (~25–35+ FPS):
+   ```bash
+   python test_video.py --video "your_video.mp4" --model yolov8n.engine
+   ```
+
+### 2. Raspberry Pi 4 / Pi 5 (NCNN / TFLite)
+Raspberry Pi ARM CPUs run fastest with NCNN or TFLite INT8 format:
+
+1. Export trained YOLOv8 model to NCNN format:
+   ```python
+   from ultralytics import YOLO
+   model = YOLO("yolov8n.pt")
+   model.export(format="ncnn")
+   ```
+2. Run tracking on Raspberry Pi (~15–22 FPS on Pi 5):
+   ```bash
+   python test_video.py --video "your_video.mp4" --model yolov8n_ncnn_model
+   ```
+
+### 3. Live Webcam Stream on Edge Devices
+To run real-time tracking from a USB webcam or CSI camera on Jetson Nano / Raspberry Pi:
+```bash
+python test_video.py --video 0
 ```
-python track.py
-```
-This will use the trained YOLOv8 model to detect and track people in the provided video, saving the output video in the current directory.
+
+---
 
 ## Results
 
@@ -80,7 +140,7 @@ The trained YOLOv8 models achieved the following mean average precisions (mAP) o
 
 ### Tracking
 
-The tracking code was able to detect and track number of people in the provided video.
+The tracking code detects and tracks people with unique IDs across video frames.
 
 <details open="" class="details-reset border rounded-2">
   <video src="https://github.com/insomnius/person-detection/assets/20650401/00f50d3a-13a8-4fdb-a4e1-f6cd5194224f" controls="controls" muted="muted" class="d-block rounded-bottom-2 border-top width-fit" style="max-height:640px; min-height: 200px">
@@ -95,10 +155,10 @@ The tracking code was able to detect and track number of people in the provided 
 </details>
 
 ## Future Improvements
-- Integrate more advanced tracking algorithms to improve the accuracy and robustness of the person tracking.
-- Explore the use of other object detection models, such as YOLOv5 or Faster R-CNN, and compare their performance.
+- Integrate more advanced tracking algorithms to improve the accuracy and robustness of person tracking.
+- Explore the use of other object detection models, such as YOLOv5 or Faster R-CNN, and compare performance.
 - Implement real-time person tracking on live video streams.
-- Explore the integration of the person tracking system with other applications, such as people counting or activity recognition.
+- Explore integration of the person tracking system with other applications (people counting or activity recognition).
 
 ## License
 This project is licensed under the [MIT License](LICENSE).
